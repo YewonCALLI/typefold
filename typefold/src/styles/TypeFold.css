@@ -1,0 +1,32 @@
+/* src/styles/TypeFold.css */
+
+.container {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+  }
+  
+  .canvasContainer {
+    flex: 1;
+    position: relative;
+  }
+  
+  .unfoldedCanvas {
+    flex: 1;
+    background-color: #f0f0f0;
+  }
+  
+  .fileInput {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+  }
+  
+  .unfoldButton {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    z-index: 1;
+  }
+  
