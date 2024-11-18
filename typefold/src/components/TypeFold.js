@@ -1,83 +1,28 @@
-// src/components/TypeFold.js
-
 import React, { useRef, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { gsap } from 'gsap';
 
 import Model from './Model';
 import InteractionHandler from './InteractionHandler';
 import UnfoldedFace from './UnfoldedFace';
 import useModelLoader from '../hooks/useModelLoader';
 import { unfoldModelWithEdges } from '../utils/geometryUtils';
-import { createUnfoldedNet } from '../utils/geometryUtils';
 
 import '../styles/TypeFold.css';
 
 export default function TypeFold() {
   const [selectedFace, setSelectedFace] = useState(null);
-  const [projectedVertices, setProjectedVertices] = useState([]);
+    const [hoveredFace, setHoveredFace] = useState(null); // 호버 상태 관리
   const [unfoldedTexture, setUnfoldedTexture] = useState(null);
+  const [fileURL, setFileURL] = useState(null);
 
-  const [uMin, setUMin] = useState(0);
-  const [uMax, setUMax] = useState(0);
-  const [vMin, setVMin] = useState(0);
-  const [vMax, setVMax] = useState(0);
 
   const fileInputRef = useRef();
   const faceMeshesRef = useRef([]);
-  const hasUnfolded = useRef(false);
-
-  const [fileURL, setFileURL] = useState(null);
   const gltf = useModelLoader(fileURL);
 
-  useEffect(() => {
-    if (selectedFace) {
-      const positions = selectedFace.geometry.attributes.position.array;
-      const vertices = [];
-      for (let i = 0; i < positions.length; i += 3) {
-        const vertex = new THREE.Vector3(
-          positions[i],
-          positions[i + 1],
-          positions[i + 2]
-        );
-        vertices.push(vertex);
-      }
-
-      // Vertex projection logic
-      const v0 = vertices[0];
-      const v1 = vertices[1];
-      const v2 = vertices[2];
-
-      const edge1 = new THREE.Vector3().subVectors(v1, v0);
-      const edge2 = new THREE.Vector3().subVectors(v2, v0);
-
-      const normal = new THREE.Vector3()
-        .crossVectors(edge1, edge2)
-        .normalize();
-
-      const uAxis = edge1.clone().normalize();
-      const vAxis = new THREE.Vector3().crossVectors(normal, uAxis);
-
-      const projected = vertices.map((vertex) => {
-        const relativeVertex = new THREE.Vector3().subVectors(vertex, v0);
-        const u = relativeVertex.dot(uAxis);
-        const v = relativeVertex.dot(vAxis);
-        return { u, v };
-      });
-
-      setProjectedVertices(projected);
-
-      // Update uMin, uMax, vMin, vMax
-      const uValues = projected.map((v) => v.u);
-      const vValues = projected.map((v) => v.v);
-      setUMin(Math.min(...uValues));
-      setUMax(Math.max(...uValues));
-      setVMin(Math.min(...vValues));
-      setVMax(Math.max(...vValues));
-    }
-  }, [selectedFace]);
+  const [unfoldCount, setUnfoldCount] = useState(0); // Unfold 버튼 클릭 횟수
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -87,14 +32,25 @@ export default function TypeFold() {
   };
 
   const handleUnfold = () => {
-    if (gltf) {
-      faceMeshesRef.current = [];
-      gltf.scene.traverse((child) => {
-        if (child.isMesh) {
-          unfoldModelWithEdges(child, faceMeshesRef, unfoldedTexture);
+    if (unfoldCount < 1) {
+      // Unfold 버튼이 처음 클릭되었을 때만 전개도 생성
+      if (gltf) {
+        faceMeshesRef.current = [];
+        gltf.scene.traverse((child) => {
+          if (child.isMesh) {
+            unfoldModelWithEdges(child, faceMeshesRef, unfoldedTexture);
+          }
+        });
+        setUnfoldCount(unfoldCount + 1);
+      }
+    } else {
+      // 이후 클릭 시 텍스처만 업데이트
+      faceMeshesRef.current.forEach((mesh) => {
+        if (mesh.material.map !== unfoldedTexture) {
+          mesh.material.map = unfoldedTexture;
+          mesh.material.needsUpdate = true;
         }
       });
-      hasUnfolded.current = true;
     }
   };
 
@@ -104,17 +60,55 @@ export default function TypeFold() {
     setUnfoldedTexture(texture);
   };
 
-  // Update materials when unfoldedTexture changes
   useEffect(() => {
-    if (unfoldedTexture && hasUnfolded.current) {
-      faceMeshesRef.current.forEach((mesh) => {
-        if (mesh.material.map !== unfoldedTexture) {
-          mesh.material.map = unfoldedTexture;
-          mesh.material.needsUpdate = true;
-        }
-      });
+    if (hoveredFace) {
+      // 호버된 면을 빨간색으로 표시
+      const { object } = hoveredFace;
+      object.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      object.material.needsUpdate = true;
     }
-  }, [unfoldedTexture]);
+
+    return () => {
+      if (hoveredFace) {
+        // 호버 상태 해제 시 원래 재질로 복구
+        const { object } = hoveredFace;
+        object.material = new THREE.MeshStandardMaterial(); // 원래 재질 (필요 시 수정)
+        object.material.needsUpdate = true;
+      }
+    };
+  }, [hoveredFace]);
+
+  useEffect(() => {
+    if (selectedFace && unfoldedTexture) {
+      const { face, object } = selectedFace;
+      const geometry = object.geometry;
+
+      if (!geometry.attributes.uv) {
+        geometry.setAttribute(
+          'uv',
+          new THREE.BufferAttribute(new Float32Array(geometry.attributes.position.count * 2), 2)
+        );
+      }
+
+      const uvAttribute = geometry.attributes.uv;
+      const faceIndex = face.a !== undefined ? face.a : face.faceIndex * 3;
+      const uvArray = uvAttribute.array;
+
+      uvArray[faceIndex * 2] = 0;
+      uvArray[faceIndex * 2 + 1] = 0;
+
+      uvArray[(faceIndex + 1) * 2] = 1;
+      uvArray[(faceIndex + 1) * 2 + 1] = 0;
+
+      uvArray[(faceIndex + 2) * 2] = 1;
+      uvArray[(faceIndex + 2) * 2 + 1] = 1;
+
+      uvAttribute.needsUpdate = true;
+
+      object.material = new THREE.MeshBasicMaterial({ map: unfoldedTexture });
+      object.material.needsUpdate = true;
+    }
+  }, [selectedFace, unfoldedTexture]);
 
   return (
     <div className="container">
@@ -126,41 +120,23 @@ export default function TypeFold() {
           onChange={handleFileChange}
           className="fileInput"
         />
-        <button  className="unfoldButton">
-          Unfold
-        </button>
         <button onClick={handleUnfold} className="unfoldButton">
           Unfold
         </button>
         <Canvas style={{ width: '100%', height: '100%' }}>
-          <ambientLight intensity={0.5} />
-          <spotLight
-            position={[10, 10, 10]}
-            angle={0.15}
-            penumbra={1}
-            intensity={1}
-          />
+          <ambientLight intensity={3} />
+          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
           <pointLight position={[-10, -10, -10]} />
-          {gltf && <Model gltf={gltf} />} {/* 3D Model */}
-          <InteractionHandler
-            faceMeshesRef={faceMeshesRef}
-            setSelectedFace={setSelectedFace}
-          />
+          {gltf && <Model gltf={gltf} />}
           <OrbitControls />
+          <InteractionHandler
+            setSelectedFace={setSelectedFace}
+            setHoveredFace={setHoveredFace} // 호버 상태 업데이트
+          />
         </Canvas>
       </div>
       <div id="unfoldedCanvas" className="unfoldedCanvas">
-        {/* Unfolded model will be displayed here */}
-        {projectedVertices.length > 0 && (
-          <UnfoldedFace
-            vertices={projectedVertices}
-            onTextureReady={handleTextureReady}
-            uMin={uMin}
-            uMax={uMax}
-            vMin={vMin}
-            vMax={vMax}
-          />
-        )}
+        <UnfoldedFace onTextureReady={handleTextureReady} />
       </div>
     </div>
   );

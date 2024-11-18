@@ -238,10 +238,9 @@ function createSingleMesh(group, position, color) {
   geometry.computeBoundingBox();
 
   const material = new THREE.MeshStandardMaterial({
-    vertexColors: true,
+    vertexColors: 0x000000,
+    color: 0xffffff,
     side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 1.0
   });
 
   const mesh = new THREE.Mesh(geometry, material);
@@ -440,11 +439,11 @@ if (unfoldedTexture) {
     const material = new THREE.MeshStandardMaterial({
       map: unfoldedTexture,
       side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.8,
       depthWrite: true,
-      depthTest: true
+      depthTest: true,
+      color: 0xffffff, // 흰색으로 설정
     });
+    
     
     mesh.material = material;
   });
