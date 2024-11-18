@@ -126,6 +126,9 @@ export default function TypeFold() {
           onChange={handleFileChange}
           className="fileInput"
         />
+        <button  className="unfoldButton">
+          Unfold
+        </button>
         <button onClick={handleUnfold} className="unfoldButton">
           Unfold
         </button>

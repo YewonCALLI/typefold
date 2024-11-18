@@ -135,89 +135,136 @@ function traverseSideFaces(group, visited, order, parent) {
   });
 }
 
+
+// 개별 면 메시 생성 헬퍼 함수
 function createGroupMeshes(groups, unfoldOrder, position, originalMesh) {
   const meshes = new Map();
-  let currentX = 0;
-
-  // 각 그룹별 색상 지정
   const groupColorsMap = new Map();
   groups.forEach(group => {
     groupColorsMap.set(group, new THREE.Color(Math.random(), Math.random(), Math.random()));
   });
 
-  unfoldOrder.forEach(({ group, parent }, index) => {
-    // 기본 geometry 생성
-    const geometry = new THREE.BufferGeometry();
-    const vertices = [];
-    const indices = [];
-    const colors = [];
-    let vertexIndex = 0;
-
-    const groupColor = groupColorsMap.get(group);
-
-    // 정점 데이터 수집
-    group.faces.forEach(faceIdx => {
-      for (let i = 0; i < 3; i++) {
-        const idx = faceIdx * 3 + i;
-        const vertex = new THREE.Vector3().fromBufferAttribute(position, idx);
-        vertices.push(vertex.x, vertex.y, vertex.z);
-        colors.push(groupColor.r, groupColor.g, groupColor.b);
-      }
-      indices.push(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-      vertexIndex += 3;
-    });
-
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-    geometry.computeBoundingBox();
-
-    const material = new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.8
-    });
-
-    const mesh = new THREE.Mesh(geometry, material);
-
-    // z축으로 정렬
-    const normal = group.normal.clone();
-    const upVector = new THREE.Vector3(0, 0, 1);
-    const rotationQuaternion = new THREE.Quaternion().setFromUnitVectors(normal, upVector);
-    mesh.quaternion.premultiply(rotationQuaternion);
-
-    // 부모 면이 있는 경우 edge 정렬
+  // side faces 처리
+  const sideFaces = unfoldOrder.filter(({group}) => group.type === 'side');
+  sideFaces.forEach(({group, parent}, index) => {
+    const mesh = createSingleMesh(group, position, groupColorsMap.get(group));
+    
     if (parent) {
       const sharedEdge = findSharedEdge(parent, group, position);
       if (sharedEdge) {
-        const parentMesh = meshes.get(parent).children[0];
-        const parentGeom = parentMesh.geometry;
-
-        // 부모 면과 현재 면의 edge vertices를 월드 좌표로 변환
-        const currentEdgeStart = sharedEdge.start.clone().applyQuaternion(mesh.quaternion);
-        const currentEdgeEnd = sharedEdge.end.clone().applyQuaternion(mesh.quaternion);
-        const parentEdgeStart = sharedEdge.start.clone().applyQuaternion(parentMesh.quaternion)
-          .add(parentMesh.position);
-        const parentEdgeEnd = sharedEdge.end.clone().applyQuaternion(parentMesh.quaternion)
-          .add(parentMesh.position);
-
-        // edge를 일치시키기 위한 오프셋 계산
-        const offset = parentEdgeStart.clone().sub(currentEdgeStart);
-        mesh.position.copy(offset);
+        alignMeshWithParent(mesh, meshes.get(parent).children[0], sharedEdge);
       }
     }
 
     const pivot = new THREE.Object3D();
     pivot.add(mesh);
-
     originalMesh.parent.add(pivot);
     meshes.set(group, pivot);
     pivot.updateMatrixWorld(true);
   });
 
+  // top, bottom faces 처리
+  function alignTopBottomFace(face, connectedSideFace) {
+    if (!face || !connectedSideFace) return;
+    
+    const faceMesh = createSingleMesh(face, position, groupColorsMap.get(face));
+    const sharedEdge = findSharedEdge(connectedSideFace, face, position);
+    
+    if (sharedEdge) {
+      const parentMesh = meshes.get(connectedSideFace).children[0];
+      
+      faceMesh.quaternion.copy(parentMesh.quaternion);
+
+      // 먼저 회전
+      const rotationAngle = face.type === 'top' ? -Math.PI/2 : Math.PI/2;
+      faceMesh.rotateX(rotationAngle);
+
+      // 회전 후 vertex 위치 맞추기
+      const parentStart = sharedEdge.start.clone()
+        .applyQuaternion(parentMesh.quaternion)
+        .add(parentMesh.position);
+      const currentStart = sharedEdge.start.clone()
+        .applyQuaternion(faceMesh.quaternion);
+      
+      const offset = parentStart.clone().sub(currentStart);
+      faceMesh.position.copy(offset);
+    }
+
+    const pivot = new THREE.Object3D();
+    pivot.add(faceMesh);
+    originalMesh.parent.add(pivot);
+    meshes.set(face, pivot);
+}
+  // top face 연결
+  const topFace = groups.find(g => g.type === 'top');
+  const topConnectedSide = sideFaces
+    .map(({group}) => group)
+    .find(sideGroup => sideGroup.connectedGroups.some(conn => conn.group === topFace));
+  alignTopBottomFace(topFace, topConnectedSide);
+
+  // bottom face 연결
+  const bottomFace = groups.find(g => g.type === 'bottom');
+  const bottomConnectedSide = sideFaces
+    .map(({group}) => group)
+    .find(sideGroup => sideGroup.connectedGroups.some(conn => conn.group === bottomFace));
+  alignTopBottomFace(bottomFace, bottomConnectedSide);
+
   return Array.from(meshes.values()).map(pivot => pivot.children[0]);
+}
+
+
+function createSingleMesh(group, position, color) {
+  const geometry = new THREE.BufferGeometry();
+  const vertices = [];
+  const indices = [];
+  const colors = [];
+  let vertexIndex = 0;
+
+  group.faces.forEach(faceIdx => {
+    for (let i = 0; i < 3; i++) {
+      const idx = faceIdx * 3 + i;
+      const vertex = new THREE.Vector3().fromBufferAttribute(position, idx);
+      vertices.push(vertex.x, vertex.y, vertex.z);
+      colors.push(color.r, color.g, color.b);
+    }
+    indices.push(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+    vertexIndex += 3;
+  });
+
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+
+  const material = new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 1.0
+  });
+
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // z축으로 정렬
+  const normal = group.normal.clone();
+  const upVector = new THREE.Vector3(0, 0, 1);
+  const rotationQuaternion = new THREE.Quaternion().setFromUnitVectors(normal, upVector);
+  mesh.quaternion.premultiply(rotationQuaternion);
+
+  return mesh;
+}
+
+function alignMeshWithParent(mesh, parentMesh, sharedEdge) {
+  const currentEdgeStart = sharedEdge.start.clone().applyQuaternion(mesh.quaternion);
+  const currentEdgeEnd = sharedEdge.end.clone().applyQuaternion(mesh.quaternion);
+  const parentEdgeStart = sharedEdge.start.clone().applyQuaternion(parentMesh.quaternion)
+    .add(parentMesh.position);
+  const parentEdgeEnd = sharedEdge.end.clone().applyQuaternion(parentMesh.quaternion)
+    .add(parentMesh.position);
+
+  const offset = parentEdgeStart.clone().sub(currentEdgeStart);
+  mesh.position.copy(offset);
 }
 
 export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
@@ -292,12 +339,6 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
       }
     }
 
-    group.center.set(0, 0, 0);
-    group.vertices.forEach(vertex => {
-      group.center.add(vertex);
-    });
-    group.center.divideScalar(group.vertices.length);
-
     faceGroups.push(group);
   }
 
@@ -312,6 +353,100 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
 
   // 그룹별 메시 생성 및 펼치기
   const meshes = createGroupMeshes(faceGroups, unfoldOrder, position, mesh);
-
   faceMeshesRef.current = meshes;
+
+  // 초기 위치와 회전값 저장
+  const initialStates = meshes.map(mesh => ({
+    position: mesh.position.clone(),
+    quaternion: mesh.quaternion.clone()
+  }));
+
+  // 각 메시에 텍스처 적용
+  meshes.forEach(mesh => {
+    const positions = mesh.geometry.attributes.position.array;
+    const normal = mesh.geometry.attributes.normal.array;
+    
+    // UV 좌표를 저장할 배열
+    const uvs = [];
+    
+    // 각 삼각형에 대해 UV 좌표 계산
+    for (let i = 0; i < positions.length; i += 9) {
+      // 삼각형의 세 정점
+      const v0 = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
+      const v1 = new THREE.Vector3(positions[i + 3], positions[i + 4], positions[i + 5]);
+      const v2 = new THREE.Vector3(positions[i + 6], positions[i + 7], positions[i + 8]);
+      
+      // 삼각형의 normal vector
+      const faceNormal = new THREE.Vector3(normal[i], normal[i + 1], normal[i + 2]);
+      
+      // 첫 번째 edge를 U 축으로 사용
+      const uAxis = v1.clone().sub(v0).normalize();
+      const vAxis = new THREE.Vector3().crossVectors(faceNormal, uAxis).normalize();
+      
+      // 각 정점에 대한 UV 좌표 계산
+      const points = [v0, v1, v2];
+      points.forEach(point => {
+        // 원점(v0)에 대한 상대 위치 계산
+        const relativePos = point.clone().sub(v0);
+        
+        // U, V 좌표 계산 (0-1 범위로 정규화)
+        const u = relativePos.dot(uAxis) / mesh.geometry.boundingBox.max.length();
+        const v = relativePos.dot(vAxis) / mesh.geometry.boundingBox.max.length();
+        
+        uvs.push(u, v);
+      });
+    }
+    
+    // UV 속성 설정
+    mesh.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    
+    // 텍스처 적용
+    mesh.material.map = unfoldedTexture;
+    mesh.material.needsUpdate = true;
+  });
+
+// unfoldModelWithEdges 함수 내 UV 매핑 부분
+if (unfoldedTexture) {
+  meshes.forEach((mesh, index) => {
+    const geometry = mesh.geometry;
+    const positions = geometry.attributes.position.array;
+    
+    // 바운딩 박스 계산
+    geometry.computeBoundingBox();
+    const bbox = geometry.boundingBox;
+    const width = bbox.max.x - bbox.min.x;
+    const height = bbox.max.y - bbox.min.y;
+    
+    // UV 좌표 계산
+    const uvs = [];
+    for (let i = 0; i < positions.length; i += 3) {
+      const x = positions[i];
+      const y = positions[i + 1];
+      
+      const u = (x - bbox.min.x) / width;
+      const v = (y - bbox.min.y) / height;
+      
+      uvs.push(u, v);
+    }
+    
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    
+    // 약간의 오프셋을 추가하여 Z-fighting 방지
+    mesh.position.z += index * 0.001;
+    
+    // 렌더링 순서 설정
+    mesh.renderOrder = index;
+    
+    const material = new THREE.MeshStandardMaterial({
+      map: unfoldedTexture,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: true,
+      depthTest: true
+    });
+    
+    mesh.material = material;
+  });
+}
 }
