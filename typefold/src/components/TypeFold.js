@@ -11,6 +11,7 @@ import InteractionHandler from './InteractionHandler';
 import UnfoldedFace from './UnfoldedFace';
 import useModelLoader from '../hooks/useModelLoader';
 import { unfoldModelWithEdges } from '../utils/geometryUtils';
+import { createUnfoldedNet } from '../utils/geometryUtils';
 
 import '../styles/TypeFold.css';
 
