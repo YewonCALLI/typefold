@@ -1,22 +1,26 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useRef, useEffect, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { PerspectiveCamera, OrbitControls } from "@react-three/drei";
+import * as THREE from "three";
 
-import Model from './Model';
-import InteractionHandler from './InteractionHandler';
-import UnfoldedFace from './UnfoldedFace';
-import useModelLoader from '../hooks/useModelLoader';
-import { unfoldModelWithEdges } from '../utils/geometryUtils';
+import Model from "./Model";
+import InteractionHandler from "./InteractionHandler";
+import UnfoldedFace from "./UnfoldedFace";
+import useModelLoader from "../hooks/useModelLoader";
+import { unfoldModelWithEdges } from "../utils/geometryUtils";
+import CameraControl from "./CameraControl";
+import ControlPanel from "./ControlPanel";
 
-import '../styles/TypeFold.css';
+import "../styles/TypeFold.css";
 
 export default function TypeFold() {
+  const [cameraDirection, setCameraDirection] = useState("perspective"); // 카메라 방향 상태 관리
+  const [zoomLevel, setZoomLevel] = useState(0); // 줌 레벨 상태 관리
+
   const [selectedFace, setSelectedFace] = useState(null);
-    const [hoveredFace, setHoveredFace] = useState(null); // 호버 상태 관리
+  const [hoveredFace, setHoveredFace] = useState(null); // 호버 상태 관리
   const [unfoldedTexture, setUnfoldedTexture] = useState(null);
   const [fileURL, setFileURL] = useState(null);
-
 
   const fileInputRef = useRef();
   const faceMeshesRef = useRef([]);
@@ -39,6 +43,7 @@ export default function TypeFold() {
         gltf.scene.traverse((child) => {
           if (child.isMesh) {
             unfoldModelWithEdges(child, faceMeshesRef, unfoldedTexture);
+            setCameraDirection("front");
           }
         });
         setUnfoldCount(unfoldCount + 1);
@@ -85,8 +90,11 @@ export default function TypeFold() {
 
       if (!geometry.attributes.uv) {
         geometry.setAttribute(
-          'uv',
-          new THREE.BufferAttribute(new Float32Array(geometry.attributes.position.count * 2), 2)
+          "uv",
+          new THREE.BufferAttribute(
+            new Float32Array(geometry.attributes.position.count * 2),
+            2
+          )
         );
       }
 
@@ -123,17 +131,35 @@ export default function TypeFold() {
         <button onClick={handleUnfold} className="unfoldButton">
           Unfold
         </button>
-        <Canvas style={{ width: '100%', height: '100%' }}>
-          <ambientLight intensity={3} />
-          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
-          <pointLight position={[-10, -10, -10]} />
-          {gltf && <Model gltf={gltf} />}
-          <OrbitControls />
-          <InteractionHandler
-            setSelectedFace={setSelectedFace}
-            setHoveredFace={setHoveredFace} // 호버 상태 업데이트
+        <Canvas
+          style={{ width: "100%", height: "100%" }}
+          gl={{ preserveDrawingBuffer: true }} // 캡쳐 기능을 위한 설정
+        >
+          <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={10} />
+          <CameraControl
+            cameraDirection={cameraDirection}
+            zoomLevel={zoomLevel}
           />
+          <ambientLight intensity={3} />
+          <spotLight
+            position={[10, 10, 10]}
+            angle={0.15}
+            penumbra={1}
+            intensity={1}
+          />
+          <pointLight position={[-10, -10, -10]} />
+          <Scene
+            gltf={gltf}
+            setSelectedFace={setSelectedFace}
+            setHoveredFace={setHoveredFace}
+          />
+          <OrbitControls />
         </Canvas>
+        <ControlPanel
+          setZoomLevel={setZoomLevel}
+          cameraDirection={cameraDirection}
+          setCameraDirection={setCameraDirection}
+        />
       </div>
       <div id="unfoldedCanvas" className="unfoldedCanvas">
         <UnfoldedFace onTextureReady={handleTextureReady} />
@@ -141,3 +167,33 @@ export default function TypeFold() {
     </div>
   );
 }
+
+const Scene = (
+  { gltf, setSelectedFace, setHoveredFace } // 3D 씬
+) => {
+  const gl = useThree((state) => state.gl);
+  useEffect(() => {
+    const printButton = document.getElementById("captureButton");
+    printButton.addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.setAttribute("download", "canvas.png");
+      link.setAttribute(
+        "href",
+        gl.domElement
+          .toDataURL("image/png")
+          .replace("image/png", "image/octet-stream")
+      );
+      link.click();
+    });
+  }, [gl]);
+
+  return (
+    <>
+      {gltf && <Model gltf={gltf} />} {/* 3D Model */}
+      <InteractionHandler
+        setSelectedFace={setSelectedFace}
+        setHoveredFace={setHoveredFace} // 호버 상태 업데이트
+      />
+    </>
+  );
+};
