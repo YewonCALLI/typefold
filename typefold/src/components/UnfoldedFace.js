@@ -1,5 +1,4 @@
-// src/components/UnfoldedFace.js
-
+//UnfoldedFace.js
 import React, { useRef, useState } from 'react';
 import Sketch from 'react-p5';
 
@@ -13,7 +12,7 @@ export default function UnfoldedFace({ vertices, onTextureReady, uMin, uMax, vMi
   const count = useRef(0);
 
   const setup = (p5, canvasParentRef) => {
-    const canvas = p5.createCanvas(p5.windowWidth / 4, p5.windowHeight);
+    const canvas = p5.createCanvas(p5.windowWidth / 2, p5.windowHeight);
     canvas.parent(canvasParentRef);
     p5.colorMode(p5.HSB, 255, 255, 255);
     p5.noCursor();

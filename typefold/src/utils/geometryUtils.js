@@ -44,9 +44,6 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
   }
   modelCenter.divideScalar(totalPositions);
 
-  // faceGroups2D를 저장할 배열
-  const faceGroups2D = [];
-
   for (let i = 0; i < faceCount; i++) {
     if (visitedFaces.has(i)) continue;
 
@@ -67,15 +64,14 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
     );
 
     faceGroups.push({ faces: group });
+
+    console.log(faceGroups);
   }
 
   faceGroups.forEach((group, groupIndex) => {
     const facePositions = [];
     const faceIndices = [];
     let vertexIndex = 0;
-
-    // 이 그룹의 2D 투영 면들을 저장할 배열
-    const group2D = [];
 
     group.faces.forEach((face) => {
       const indices = face;
@@ -89,17 +85,8 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
 
       faceIndices.push(vertexIndex, vertexIndex + 1, vertexIndex + 2);
       vertexIndex += 3;
-
-      // 각 면을 2D로 투영하여 group2D에 추가
-      const projectedFace = projectFaceTo2D([v0, v1, v2]);
-      group2D.push(projectedFace);
     });
 
-    // faceGroups2D에 이 그룹의 2D 면들을 추가
-    faceGroups2D.push(group2D);
-
-    // 아래는 기존의 3D 메쉬와 애니메이션을 위한 코드입니다.
-    // 필요에 따라 유지하거나 생략할 수 있습니다.
     const faceGeometry = new THREE.BufferGeometry();
     faceGeometry.setAttribute(
       'position',
@@ -173,11 +160,7 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
       ease: 'power2.out',
     });
   });
-
-  // faceGroups2D를 반환하여 p5.js에서 사용 가능하도록 함
-  return faceGroups2D;
 }
-
 
 function groupConnectedFacesByNormal(
   currentFaceIndex,
@@ -246,48 +229,3 @@ export function calculateNormalForFace(face, position) {
   const normal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
   return normal;
 }
-
-// geometryUtils.js
-export function prepareFaceGroupsForP5(faceGroups, position) {
-  if (!faceGroups || faceGroups.length === 0) {
-    console.warn("FaceGroups is empty");
-    return [];
-  }
-
-  return faceGroups.map(group => {
-    return group.faces.map(face => {
-      return face.map(vertexIndex => {
-        const vertex = new THREE.Vector3().fromBufferAttribute(position, vertexIndex);
-        return { x: vertex.x, y: vertex.y, z: vertex.z };
-      });
-    });
-  });
-}
-
-
-export function projectFaceTo2D(vertices) {
-  // vertices는 THREE.Vector3 객체의 배열입니다 (v0, v1, v2)
-  const [v0, v1, v2] = vertices;
-
-  // 면의 노멀 벡터 계산
-  const edge1 = new THREE.Vector3().subVectors(v1, v0);
-  const edge2 = new THREE.Vector3().subVectors(v2, v0);
-  const normal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
-
-  // 로컬 좌표계 축 정의
-  const uAxis = edge1.clone().normalize(); // u축
-  const vAxis = new THREE.Vector3().crossVectors(normal, uAxis); // v축
-
-  // 정점들을 로컬 좌표계로 변환
-  const vertices2D = [];
-
-  [v0, v1, v2].forEach(vertex => {
-    const relativeVertex = new THREE.Vector3().subVectors(vertex, v0);
-    const u = relativeVertex.dot(uAxis);
-    const v = relativeVertex.dot(vAxis);
-    vertices2D.push({ u, v });
-  });
-
-  return vertices2D;
-}
-
