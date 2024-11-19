@@ -140,7 +140,7 @@ export default function TypeFold() {
             cameraDirection={cameraDirection}
             zoomLevel={zoomLevel}
           />
-          <ambientLight intensity={3} />
+          <ambientLight intensity={2} />
           <spotLight
             position={[10, 10, 10]}
             angle={0.15}
