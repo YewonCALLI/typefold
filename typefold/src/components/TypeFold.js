@@ -121,16 +121,46 @@ export default function TypeFold() {
   return (
     <div className="container">
       <div className="canvasContainer">
-        <input
-          type="file"
-          ref={fileInputRef}
-          accept=".gltf,.glb"
-          onChange={handleFileChange}
-          className="fileInput"
+        <div className="header">
+          <h1>TypoFold</h1>
+        </div>
+        <div className="controlContainer">
+          <div className="fileInputContainer">
+            <label className="fileInputLabel" for="file">
+              {fileInputRef.current && fileInputRef.current.files[0]
+                ? fileInputRef.current.files[0].name
+                : "Choose a file"}
+            </label>
+            <span
+              onClick={() => {
+                fileInputRef.current.click();
+              }}
+              className="fileInput"
+            >
+              Upload
+              <input
+                type="file"
+                id="file"
+                ref={fileInputRef}
+                accept=".gltf,.glb"
+                onChange={handleFileChange}
+              />
+            </span>
+          </div>
+          <div className="unfoldButtonContainer">
+            <button onClick={handleUnfold} className="unfoldButton">
+              Unfold
+            </button>
+            <span>|</span>
+            <button id="captureButton">Print</button>
+          </div>
+        </div>
+        <ControlPanel
+          setZoomLevel={setZoomLevel}
+          zoomLevel={zoomLevel}
+          cameraDirection={cameraDirection}
+          setCameraDirection={setCameraDirection}
         />
-        <button onClick={handleUnfold} className="unfoldButton">
-          Unfold
-        </button>
         <Canvas
           style={{ width: "100%", height: "100%" }}
           gl={{ preserveDrawingBuffer: true }} // 캡쳐 기능을 위한 설정
@@ -155,11 +185,6 @@ export default function TypeFold() {
           />
           <OrbitControls />
         </Canvas>
-        <ControlPanel
-          setZoomLevel={setZoomLevel}
-          cameraDirection={cameraDirection}
-          setCameraDirection={setCameraDirection}
-        />
       </div>
       <div id="unfoldedCanvas" className="unfoldedCanvas">
         <UnfoldedFace onTextureReady={handleTextureReady} />

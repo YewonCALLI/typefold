@@ -12,52 +12,40 @@ function ControlPanel({
     setZoomLevel(zoomLevel + 1);
   };
 
+  console.log("zoomLevel", zoomLevel);
+
   return (
     <>
       {/* 카메라 방향 변경 버튼 */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 20,
-          left: 10,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          <button onClick={() => zoomDown()}>-</button>
-          <button onClick={() => setZoomLevel(0)}>기본 ({zoomLevel})</button>
-          <button onClick={() => zoomUp()}>+</button>
+      <div className="cameraControl">
+        <div className="zoomControl">
+          <button onClick={() => zoomDown()} className="zoomButton">
+            -
+          </button>
+          <button onClick={() => setZoomLevel(0)} id="defaultZoom">
+            Zoom : {zoomLevel}
+          </button>
+          <button onClick={() => zoomUp()} className="zoomButton">
+            +
+          </button>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
+        <div className="cameraDirection">
           <button
             className={cameraDirection === "perspective" ? "active" : ""}
             onClick={() => setCameraDirection("perspective")}
           >
-            3D 미리보기
+            3D Viewport
           </button>
+          <span>|</span>
+
           <button
             className={cameraDirection === "front" ? "active" : ""}
             onClick={() => setCameraDirection("front")}
           >
-            전개도 미리보기
+            Figure Front View
           </button>
         </div>
-        <button id="captureButton">Print</button>
       </div>
     </>
   );
