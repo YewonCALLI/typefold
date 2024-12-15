@@ -1,22 +1,30 @@
-// src/hooks/useModelLoader.js
+import { useEffect, useState } from "react";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
-import { useState, useEffect } from 'react';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
-export default function useModelLoader(url) {
+const useModelLoader = (fileURL) => {
   const [gltf, setGltf] = useState(null);
 
   useEffect(() => {
-    if (url) {
-      const loader = new GLTFLoader();
-      loader.load(
-        url,
-        (gltfData) => setGltf(gltfData),
-        undefined,
-        (error) => console.error('Error loading GLTF:', error)
-      );
+    if (!fileURL) {
+      setGltf(null); // 경로가 없으면 GLTF 초기화
+      return;
     }
-  }, [url]);
+
+    const loader = new GLTFLoader();
+    loader.load(
+      fileURL,
+      (loadedGltf) => {
+        setGltf(loadedGltf); // 성공적으로 로드되었을 때만 설정
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading model:", error);
+        setGltf(null); // 로드 실패 시 초기화
+      }
+    );
+  }, [fileURL]);
 
   return gltf;
-}
+};
+
+export default useModelLoader;

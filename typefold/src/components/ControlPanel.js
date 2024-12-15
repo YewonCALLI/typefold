@@ -1,50 +1,32 @@
 function ControlPanel({
-  zoomLevel,
-  setZoomLevel,
   cameraDirection,
-  setCameraDirection,
+  onHandlePerspective,
+  onHandleFront,
+  children,
 }) {
-  const zoomUp = () => {
-    setZoomLevel(zoomLevel - 1);
-  };
-
-  const zoomDown = () => {
-    setZoomLevel(zoomLevel + 1);
-  };
-
-  console.log("zoomLevel", zoomLevel);
-
   return (
     <>
       {/* 카메라 방향 변경 버튼 */}
       <div className="cameraControl">
-        <div className="zoomControl">
-          <button onClick={() => zoomDown()} className="zoomButton">
-            -
-          </button>
-          <button onClick={() => setZoomLevel(0)} id="defaultZoom">
-            Zoom : {zoomLevel}
-          </button>
-          <button onClick={() => zoomUp()} className="zoomButton">
-            +
-          </button>
-        </div>
-
         <div className="cameraDirection">
           <button
-            className={cameraDirection === "perspective" ? "active" : ""}
-            onClick={() => setCameraDirection("perspective")}
+            className="controlButton"
+            onClick={() => {
+              onHandlePerspective();
+            }}
           >
-            3D Viewport
+            Fold (3D)
           </button>
-          <span>|</span>
 
           <button
-            className={cameraDirection === "front" ? "active" : ""}
-            onClick={() => setCameraDirection("front")}
+            className="controlButton"
+            onClick={() => {
+              onHandleFront();
+            }}
           >
-            Figure Front View
+            Unfold (2D)
           </button>
+          {children}
         </div>
       </div>
     </>

@@ -1,7 +1,12 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { PerspectiveCamera, OrbitControls } from "@react-three/drei";
+import {
+  PerspectiveCamera,
+  OrbitControls,
+  MapControls,
+} from "@react-three/drei";
 import * as THREE from "three";
+import { Link } from "react-router-dom";
 
 import Model from "./Model";
 import InteractionHandler from "./InteractionHandler";
@@ -15,25 +20,33 @@ import "../styles/TypeFold.css";
 
 export default function TypeFold() {
   const [cameraDirection, setCameraDirection] = useState("perspective"); // 카메라 방향 상태 관리
-  const [zoomLevel, setZoomLevel] = useState(0); // 줌 레벨 상태 관리
+
+  const alphabets = [
+    {
+      type: "A",
+      path: "./models/A.gltf",
+    },
+    {
+      type: "B",
+      path: "./models/B.glb",
+    },
+    {
+      type: "D",
+      path: "./models/D.glb",
+    },
+  ];
 
   const [selectedFace, setSelectedFace] = useState(null);
   const [hoveredFace, setHoveredFace] = useState(null); // 호버 상태 관리
   const [unfoldedTexture, setUnfoldedTexture] = useState(null);
   const [fileURL, setFileURL] = useState(null);
 
-  const fileInputRef = useRef();
+  const [currentType, setCurrentType] = useState(null);
+
   const faceMeshesRef = useRef([]);
   const gltf = useModelLoader(fileURL);
 
   const [unfoldCount, setUnfoldCount] = useState(0); // Unfold 버튼 클릭 횟수
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setFileURL(URL.createObjectURL(file));
-    }
-  };
 
   const handleUnfold = () => {
     if (unfoldCount < 1) {
@@ -118,58 +131,123 @@ export default function TypeFold() {
     }
   }, [selectedFace, unfoldedTexture]);
 
+  //메쉬 초기화
+  const resetMeshes = () => {
+    faceMeshesRef.current.forEach((mesh) => {
+      if (mesh.parent) {
+        mesh.parent.remove(mesh);
+      }
+    });
+    faceMeshesRef.current = [];
+  };
+
+  const handleResetToInitialState = () => {
+    if (!fileURL) return;
+
+    // 기존 메쉬 제거
+    faceMeshesRef.current.forEach((mesh) => {
+      if (mesh.parent) {
+        mesh.parent.remove(mesh);
+      }
+    });
+    faceMeshesRef.current = [];
+
+    // 상태 초기화
+    setUnfoldCount(0);
+    setSelectedFace(null);
+    setHoveredFace(null);
+    setUnfoldedTexture(null);
+    setCameraDirection("perspective");
+
+    // 강제로 상태 갱신
+    setFileURL(null); // 잠시 null로 설정
+    setTimeout(() => {
+      setFileURL(
+        alphabets.find((alphabet) => alphabet.type === currentType.type).path
+      ); // 동일한 경로 재설정
+      console.log("Model reloaded:", alphabets[0].path);
+    }, 0);
+  };
+
+  useEffect(() => {
+    if (fileURL) {
+      // 이전 메쉬 제거
+      resetMeshes();
+      setCameraDirection("perspective"); // 카메라 방향 초기화
+      setUnfoldCount(0); // Unfold 버튼 상태 초기화
+    }
+  }, [fileURL]);
+
   return (
     <div className="container">
+      <div className="header">
+        <Link
+          className="title"
+          onClick={() => {
+            window.location.href = "/";
+          }}
+        >
+          TypoFold
+        </Link>
+        <Link
+          className="aboutButton"
+          onClick={() => {
+            window.location.href = "/about";
+          }}
+        >
+          About Project
+        </Link>
+      </div>
       <div className="canvasContainer">
-        <div className="header">
-          <h1>TypoFold</h1>
-        </div>
         <div className="controlContainer">
           <div className="fileInputContainer">
-            <label className="fileInputLabel" for="file">
-              {fileInputRef.current && fileInputRef.current.files[0]
-                ? fileInputRef.current.files[0].name
-                : "Choose a file"}
-            </label>
-            <span
-              onClick={() => {
-                fileInputRef.current.click();
-              }}
-              className="fileInput"
-            >
-              Upload
-              <input
-                type="file"
-                id="file"
-                ref={fileInputRef}
-                accept=".gltf,.glb"
-                onChange={handleFileChange}
-              />
-            </span>
-          </div>
-          <div className="unfoldButtonContainer">
-            <button onClick={handleUnfold} className="unfoldButton">
-              Unfold
-            </button>
-            <span>|</span>
-            <button id="captureButton">Print</button>
+            {alphabets.map((alphabet) => (
+              <button
+                style={
+                  fileURL === alphabet.path
+                    ? {
+                        backgroundColor: "#000",
+                        color: "#fff",
+                      }
+                    : {}
+                }
+                className="fileButton"
+                onClick={() => {
+                  if (currentType?.type === alphabet.type) {
+                    // 같은 알파벳 선택 시 강제 리로드
+                    setFileURL(null); // 경로 초기화
+                    setTimeout(() => setFileURL(alphabet.path), 0);
+                  } else {
+                    setCurrentType(alphabet);
+                    setFileURL(alphabet.path);
+                  }
+                }}
+              >
+                {alphabet.type}
+              </button>
+            ))}
           </div>
         </div>
         <ControlPanel
-          setZoomLevel={setZoomLevel}
-          zoomLevel={zoomLevel}
           cameraDirection={cameraDirection}
-          setCameraDirection={setCameraDirection}
-        />
+          onHandlePerspective={() => {
+            handleResetToInitialState();
+          }}
+          onHandleFront={() => {
+            setCameraDirection("front");
+            handleUnfold();
+          }}
+        >
+          <button id="captureButton" className="controlButton">
+            Print 🖨️
+          </button>
+        </ControlPanel>
         <Canvas
           style={{ width: "100%", height: "100%" }}
           gl={{ preserveDrawingBuffer: true }} // 캡쳐 기능을 위한 설정
         >
           <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={10} />
-          <CameraControl
-            cameraDirection={cameraDirection}
-            zoomLevel={zoomLevel}
-          />
+          <CameraControl cameraDirection={cameraDirection} />
           <ambientLight intensity={2} />
           <spotLight
             position={[10, 10, 10]}
@@ -183,7 +261,11 @@ export default function TypeFold() {
             setSelectedFace={setSelectedFace}
             setHoveredFace={setHoveredFace}
           />
-          <OrbitControls />
+          {cameraDirection === "perspective" ? (
+            <OrbitControls />
+          ) : (
+            <MapControls enableDamping={false} />
+          )}
         </Canvas>
       </div>
       <div id="unfoldedCanvas" className="unfoldedCanvas">

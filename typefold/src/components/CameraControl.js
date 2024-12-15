@@ -1,7 +1,7 @@
 import React from "react";
 import { useThree } from "@react-three/fiber";
 
-function CameraControl({ cameraDirection, zoomLevel }) {
+function CameraControl({ cameraDirection }) {
   const { camera } = useThree();
 
   React.useEffect(() => {
@@ -9,31 +9,23 @@ function CameraControl({ cameraDirection, zoomLevel }) {
 
     switch (cameraDirection) {
       case "perspective":
-        camera.position.set(
-          distance + zoomLevel,
-          distance + zoomLevel,
-          distance + zoomLevel
-        );
+        camera.position.set(distance, distance, distance);
         camera.up.set(0, 1, 0); // 원근
         break;
       case "front":
-        camera.position.set(0, 0, distance * 5.5 + zoomLevel);
+        camera.position.set(0, 0, distance * 5.5);
         camera.rotation.set(0, 0, 0);
         camera.up.set(0, 1, 1); // 앞에서 보기
         break;
       default:
-        camera.position.set(
-          distance + zoomLevel,
-          distance + zoomLevel,
-          distance + zoomLevel
-        );
+        camera.position.set(distance, distance, distance);
         camera.up.set(0, 1, 0); // 원근
         break;
     }
 
     camera.lookAt(0, 0, 0); // 항상 중심을 바라봄
     camera.updateProjectionMatrix();
-  }, [camera, cameraDirection, zoomLevel]);
+  }, [camera, cameraDirection]);
 
   return null;
 }

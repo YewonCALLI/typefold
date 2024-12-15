@@ -114,7 +114,7 @@ function TextScene() {
         scale={[1, 1, 1]}
         ref={meshRef}
         size={1}
-        font={"/jost.json"}
+        font={"/inter.json"}
         curveSegments={24}
         brevelSegments={0}
         bevelEnabled
@@ -125,7 +125,6 @@ function TextScene() {
         letterSpacing={0}
       >
         {`A`}
-        <meshStandardMaterial color="orange" />
       </Text3D>
     </Center>
   );
