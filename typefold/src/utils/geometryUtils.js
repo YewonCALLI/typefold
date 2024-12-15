@@ -625,42 +625,61 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
   });
 
   // unfoldModelWithEdges 함수 내 UV 매핑 부분
-  if (unfoldedTexture) {
-    meshes.forEach((mesh, index) => {
-      const geometry = mesh.geometry;
-      const positions = geometry.attributes.position.array;
+  // unfoldModelWithEdges 함수에서 텍스처 매핑 부분만 수정
+if (unfoldedTexture) {
+  // 각 메시에 대해 텍스처 매핑 적용
+  meshes.forEach((mesh) => {
+    const geometry = mesh.geometry;
+    const positions = geometry.attributes.position.array;
+    const normals = geometry.attributes.normal.array;
 
-      // 바운딩 박스 계산
-      geometry.computeBoundingBox();
-      const bbox = geometry.boundingBox;
-      const width = bbox.max.x - bbox.min.x;
-      const height = bbox.max.y - bbox.min.y;
+    // UV 좌표를 위한 배열 생성
+    const uvs = [];
+    const vertexCount = positions.length / 3;
 
-      // UV 좌표 계산
-      const uvs = [];
-      for (let i = 0; i < positions.length; i += 3) {
-        const x = positions[i];
-        const y = positions[i + 1];
+    // 모든 면에 대한 전역 UV 매핑 적용
+    for (let i = 0; i < vertexCount; i++) {
+      const x = positions[i * 3];
+      const y = positions[i * 3 + 1];
+      const z = positions[i * 3 + 2];
 
-        const u = (x - bbox.min.x) / width;
-        const v = (y - bbox.min.y) / height;
-
-        uvs.push(u, v);
+      // 법선 벡터 가져오기
+      const nx = normals[i * 3];
+      const ny = normals[i * 3 + 1];
+      const nz = normals[i * 3 + 2];
+      
+      // 면의 방향에 따라 UV 좌표 결정
+      let u, v;
+      
+      if (Math.abs(ny) > Math.abs(nx) && Math.abs(ny) > Math.abs(nz)) {
+        // top/bottom 면
+        u = (x + 1) / 2;
+        v = (z + 1) / 2;
+      } else if (Math.abs(nx) > Math.abs(nz)) {
+        // 측면 (x 방향)
+        u = (z + 1) / 2;
+        v = (y + 1) / 2;
+      } else {
+        // 측면 (z 방향)
+        u = (x + 1) / 2;
+        v = (y + 1) / 2;
       }
 
-      geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-      // 렌더링 순서 설정
-      mesh.renderOrder = index;
+      uvs.push(u, v);
+    }
 
-      const material = new THREE.MeshStandardMaterial({
-        map: unfoldedTexture,
-        side: THREE.DoubleSide,
-        depthWrite: true,
-        depthTest: true,
-        color: 0xffffff, // 흰색으로 설정
-      });
+    // UV 속성 설정
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
 
-      mesh.material = material;
+    // 텍스처 적용
+    const material = new THREE.MeshStandardMaterial({
+      map: unfoldedTexture,
+      side: THREE.DoubleSide,
+      transparent: false
     });
-  }
+
+    mesh.material = material;
+    mesh.material.needsUpdate = true;
+  });
+}
 }

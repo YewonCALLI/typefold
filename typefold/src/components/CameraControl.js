@@ -13,7 +13,7 @@ function CameraControl({ cameraDirection }) {
         camera.up.set(0, 1, 0); // 원근
         break;
       case "front":
-        camera.position.set(0, 0, distance * 5.5);
+        camera.position.set(0, 0, distance *1.5);
         camera.rotation.set(0, 0, 0);
         camera.up.set(0, 1, 1); // 앞에서 보기
         break;
@@ -23,7 +23,6 @@ function CameraControl({ cameraDirection }) {
         break;
     }
 
-    camera.lookAt(0, 0, 0); // 항상 중심을 바라봄
     camera.updateProjectionMatrix();
   }, [camera, cameraDirection]);
 
