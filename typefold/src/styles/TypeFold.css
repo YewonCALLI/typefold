@@ -177,6 +177,9 @@ body {
 
 .fileInputContainer {
   display: flex;
+  width: 200px;
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 10px;
@@ -194,6 +197,13 @@ body {
   padding: 8px;
   background-color: #fff;
   color: #9f9f9f;
+}
+
+.instruction{
+  font-size: larger;
+  text-align: center;
+  font-weight: 200;
+  padding-bottom: 15px;
 }
 
 .fileInput {
@@ -220,8 +230,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: fit-content;
-  height: fit-content;
+  width: 40px;
+  height: 40px;
   padding: 8px 13px;
   border: 1px solid #000000;
   color: #000000;

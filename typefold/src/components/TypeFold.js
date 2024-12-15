@@ -1,3 +1,5 @@
+// TypeFold.js
+
 import React, { useRef, useEffect, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import {
@@ -17,23 +19,117 @@ import CameraControl from "./CameraControl";
 import ControlPanel from "./ControlPanel";
 
 import "../styles/TypeFold.css";
+import { AxesHelper } from "three";
 
 export default function TypeFold() {
   const [cameraDirection, setCameraDirection] = useState("perspective"); // 카메라 방향 상태 관리
 
   const alphabets = [
-    {
-      type: "A",
-      path: "./models/A.gltf",
-    },
-    {
-      type: "B",
-      path: "./models/B.glb",
-    },
-    {
-      type: "D",
-      path: "./models/D.glb",
-    },
+      {
+        "type": "A",
+        "path": "./models/a.gltf"
+      },
+      {
+        "type": "B",
+        "path": "./models/b.gltf"
+      },
+      {
+        "type": "C",
+        "path": "./models/c.gltf"
+      },
+      {
+        "type": "D",
+        "path": "./models/d.gltf"
+      },
+      {
+        "type": "E",
+        "path": "./models/e.gltf"
+      },
+      {
+        "type": "F",
+        "path": "./models/f.gltf"
+      },
+      {
+        "type": "G",
+        "path": "./models/g.gltf"
+      },
+      {
+        "type": "H",
+        "path": "./models/h.gltf"
+      },
+      {
+        "type": "I",
+        "path": "./models/i.gltf"
+      },
+      {
+        "type": "J",
+        "path": "./models/j.gltf"
+      },
+      {
+        "type": "K",
+        "path": "./models/k.gltf"
+      },
+      {
+        "type": "L",
+        "path": "./models/l.gltf"
+      },
+      {
+        "type": "M",
+        "path": "./models/m.gltf"
+      },
+      {
+        "type": "N",
+        "path": "./models/n.gltf"
+      },
+      {
+        "type": "O",
+        "path": "./models/o.gltf"
+      },
+      {
+        "type": "P",
+        "path": "./models/p.gltf"
+      },
+      {
+        "type": "Q",
+        "path": "./models/q.gltf"
+      },
+      {
+        "type": "R",
+        "path": "./models/r.gltf"
+      },
+      {
+        "type": "S",
+        "path": "./models/s.gltf"
+      },
+      {
+        "type": "T",
+        "path": "./models/t.gltf"
+      },
+      {
+        "type": "U",
+        "path": "./models/u.gltf"
+      },
+      {
+        "type": "V",
+        "path": "./models/v.gltf"
+      },
+      {
+        "type": "W",
+        "path": "./models/w.gltf"
+      },
+      {
+        "type": "X",
+        "path": "./models/x.gltf"
+      },
+      {
+        "type": "Y",
+        "path": "./models/y.gltf"
+      },
+      {
+        "type": "Z",
+        "path": "./models/z.gltf"
+      }
+  
   ];
 
   const [selectedFace, setSelectedFace] = useState(null);
@@ -200,6 +296,9 @@ export default function TypeFold() {
       </div>
       <div className="canvasContainer">
         <div className="controlContainer">
+          <div className="instruction">
+            Choose an alphabet!
+          </div>
           <div className="fileInputContainer">
             {alphabets.map((alphabet) => (
               <button
@@ -264,7 +363,7 @@ export default function TypeFold() {
           {cameraDirection === "perspective" ? (
             <OrbitControls />
           ) : (
-            <MapControls enableDamping={false} enableRotate={false} />
+            <MapControls enableDamping={false} enableRotate={true} />
           )}
         </Canvas>
       </div>
