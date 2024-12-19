@@ -14,15 +14,19 @@ import Model from "./Model";
 import InteractionHandler from "./InteractionHandler";
 import UnfoldedFace from "./UnfoldedFace";
 import useModelLoader from "../hooks/useModelLoader";
-import { unfoldModelWithEdges } from "../utils/geometryUtils";
+import { unfoldModelWithEdges, createFaceGroups } from "../utils/geometryUtils";
 import CameraControl from "./CameraControl";
 import ControlPanel from "./ControlPanel";
+
+
 
 import "../styles/TypeFold.css";
 import { AxesHelper } from "three";
 
 export default function TypeFold() {
   const [cameraDirection, setCameraDirection] = useState("perspective"); // 카메라 방향 상태 관리
+  const [faceGroups, setFaceGroups] = useState(null);
+  const [groupedGeometry, setGroupedGeometry] = useState(null);
 
   const alphabets = [
       {
@@ -144,6 +148,26 @@ export default function TypeFold() {
 
   const [unfoldCount, setUnfoldCount] = useState(0); // Unfold 버튼 클릭 횟수
 
+  useEffect(() => {
+    if (gltf && unfoldedTexture) {
+      gltf.scene.traverse((child) => {
+        if (child.isMesh) {
+          const { faceGroups: groups, geometry } = createFaceGroups(child);
+          setFaceGroups(groups);
+          setGroupedGeometry(geometry);
+          
+          child.geometry = geometry;
+          child.material = new THREE.MeshBasicMaterial({
+            map: unfoldedTexture,
+            side: THREE.DoubleSide
+          });
+          
+          child.material.needsUpdate = true;
+        }
+      });
+    }
+  }, [gltf, unfoldedTexture]);
+  
   const handleUnfold = () => {
     if (unfoldCount < 1) {
       // Unfold 버튼이 처음 클릭되었을 때만 전개도 생성
@@ -240,13 +264,9 @@ export default function TypeFold() {
   const handleResetToInitialState = () => {
     if (!fileURL) return;
 
-    // 기존 메쉬 제거
-    faceMeshesRef.current.forEach((mesh) => {
-      if (mesh.parent) {
-        mesh.parent.remove(mesh);
-      }
-    });
-    faceMeshesRef.current = [];
+    resetMeshes();
+
+
 
     // 상태 초기화
     setUnfoldCount(0);

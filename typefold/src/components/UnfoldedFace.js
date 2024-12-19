@@ -12,7 +12,6 @@ export default function ShaderTexture({ onTextureReady }) {
 
     void main() {
       vTexCoord = aTexCoord;
-      // Convert position to clip space
       vec4 positionVec4 = vec4(aPosition, 1.0);
       positionVec4.xy = positionVec4.xy * 2.0 - 1.0;
       gl_Position = positionVec4;
@@ -25,10 +24,9 @@ export default function ShaderTexture({ onTextureReady }) {
     uniform float uTime;
     uniform int uPattern;
 
-    // 육각형 패턴을 만드는 함수
     float hexagonPattern(vec2 p) {
       vec2 hexCoord = p * 3.0;
-      hexCoord.x *= 1.1547; // 2.0 / sqrt(3.0)
+      hexCoord.x *= 1.1547;
       vec2 gridId = floor(hexCoord);
       vec2 gridPos = fract(hexCoord) - 0.5;
       
@@ -36,13 +34,11 @@ export default function ShaderTexture({ onTextureReady }) {
       return hex;
     }
 
-    // 체크 패턴을 만드는 함수
     float checkerPattern(vec2 p, float size) {
-      vec2 grid = floor(fract(p) * size);
+      vec2 grid = floor(p * size);
       return mod(grid.x + grid.y, 2.0);
     }
 
-    // 지그재그 패턴을 만드는 함수
     float zigzagPattern(vec2 p) {
       float v = sin(p.x * 10.0 + sin(p.y * 5.0)) * 0.5 + 
                 sin(p.y * 10.0) * 0.5;
@@ -50,12 +46,8 @@ export default function ShaderTexture({ onTextureReady }) {
     }
 
     void main() {
-      // Correct UV coordinates
       vec2 uv = vTexCoord;
-      uv.y = 1.0 - uv.y; // Flip Y coordinate
-      
-      // Scale UV coordinates to create repeating pattern
-      uv = fract(uv * 2.0); // Adjust the multiplication factor to change pattern scale
+      uv.y = 1.0 - uv.y;  // Flip Y coordinate
       
       vec3 color;
       
@@ -106,8 +98,6 @@ export default function ShaderTexture({ onTextureReady }) {
       const newShader = p5.createShader(vertexShader, fragmentShader);
       shaderRef.current = newShader;
       p5.shader(newShader);
-      
-      // Remove ortho projection as we're using normalized device coordinates
       p5.noStroke();
 
       p5.keyPressed = () => {
@@ -128,7 +118,6 @@ export default function ShaderTexture({ onTextureReady }) {
       shaderRef.current.setUniform('uTime', p5.millis() / 1000.0);
       shaderRef.current.setUniform('uPattern', patternType);
       
-      // Draw a rectangle that covers the entire canvas
       p5.rect(-p5.width/2, -p5.height/2, p5.width, p5.height);
       
       if (onTextureReady) {

@@ -683,3 +683,141 @@ if (unfoldedTexture) {
   });
 }
 }
+
+export function createFaceGroups(mesh) {
+  let geometry = mesh.geometry.clone();
+  if (!geometry.index) {
+    geometry = mergeVertices(geometry);
+  }
+  geometry = geometry.toNonIndexed();
+
+  const position = geometry.attributes.position;
+  const faceCount = position.count / 3;
+  
+  // 면들을 그룹화
+  const faceGroups = [];
+  const visitedFaces = new Set();
+  const thresholdAngle = THREE.MathUtils.degToRad(0.5);
+
+  for (let i = 0; i < faceCount; i++) {
+    if (visitedFaces.has(i)) continue;
+
+    const group = {
+      faces: [],
+      normal: null,
+      type: null,
+      center: new THREE.Vector3(),
+      vertices: [],
+      connectedGroups: [],
+      boundingBox: new THREE.Box3()
+    };
+
+    const startFaceVertices = [];
+    for (let j = 0; j < 3; j++) {
+      const idx = i * 3 + j;
+      startFaceVertices.push(
+        new THREE.Vector3().fromBufferAttribute(position, idx)
+      );
+    }
+    
+    const v1 = new THREE.Vector3().subVectors(startFaceVertices[1], startFaceVertices[0]);
+    const v2 = new THREE.Vector3().subVectors(startFaceVertices[2], startFaceVertices[0]);
+    group.normal = new THREE.Vector3().crossVectors(v1, v2).normalize();
+
+    // BFS로 유사한 방향의 인접한 면들 찾기
+    const queue = [i];
+    while (queue.length > 0) {
+      const currentFace = queue.shift();
+      if (visitedFaces.has(currentFace)) continue;
+
+      visitedFaces.add(currentFace);
+      group.faces.push(currentFace);
+
+      // 면의 모든 정점을 그룹에 추가
+      for (let j = 0; j < 3; j++) {
+        const idx = currentFace * 3 + j;
+        const vertex = new THREE.Vector3().fromBufferAttribute(position, idx);
+        group.vertices.push(vertex);
+        group.boundingBox.expandByPoint(vertex);
+      }
+
+      // 인접한 면들 찾기
+      for (let j = 0; j < faceCount; j++) {
+        if (visitedFaces.has(j)) continue;
+
+        if (areFacesAdjacent(currentFace, j, position)) {
+          const faceVertices = [];
+          for (let k = 0; k < 3; k++) {
+            const idx = j * 3 + k;
+            faceVertices.push(new THREE.Vector3().fromBufferAttribute(position, idx));
+          }
+          const edge1 = new THREE.Vector3().subVectors(faceVertices[1], faceVertices[0]);
+          const edge2 = new THREE.Vector3().subVectors(faceVertices[2], faceVertices[0]);
+          const normal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
+
+          const angle = group.normal.angleTo(normal);
+          if (angle < thresholdAngle) {
+            queue.push(j);
+          }
+        }
+      }
+    }
+
+    // 그룹의 중심점 계산
+    group.center.copy(group.boundingBox.getCenter(new THREE.Vector3()));
+    
+    // 그룹에 대한 UV 좌표 생성
+    createGroupUVs(group, geometry);
+
+    faceGroups.push(group);
+  }
+
+  // 면 유형 분류 및 연결 관계 찾기
+  classifyFaceGroups(faceGroups);
+  findGroupConnections(faceGroups, position);
+
+  return { faceGroups, geometry };
+}
+
+// 그룹별 UV 매핑 함수
+function createGroupUVs(group, geometry) {
+  // UV 속성이 없다면 생성
+  if (!geometry.attributes.uv) {
+    const uvs = new Float32Array(geometry.attributes.position.count * 2);
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  }
+
+  // 그룹의 로컬 좌표계 설정
+  const normal = group.normal;
+  const tangent = new THREE.Vector3(1, 0, 0);
+  if (Math.abs(normal.dot(tangent)) > 0.9) {
+    tangent.set(0, 1, 0);
+  }
+  const bitangent = new THREE.Vector3().crossVectors(normal, tangent).normalize();
+  tangent.crossVectors(bitangent, normal).normalize();
+
+  // 그룹의 크기 계산
+  const size = group.boundingBox.getSize(new THREE.Vector3());
+  const maxSize = Math.max(size.x, size.y, size.z);
+
+  // 각 면의 UV 좌표 설정
+  group.faces.forEach(faceIndex => {
+    for (let i = 0; i < 3; i++) {
+      const vertexIndex = faceIndex * 3 + i;
+      const vertex = new THREE.Vector3().fromBufferAttribute(
+        geometry.attributes.position,
+        vertexIndex
+      );
+
+      // 정점의 로컬 좌표 계산
+      const localPos = vertex.clone().sub(group.center);
+      const u = (localPos.dot(tangent) / maxSize) + 0.5;
+      const v = (localPos.dot(bitangent) / maxSize) + 0.5;
+
+      // UV 좌표 설정
+      geometry.attributes.uv.setXY(vertexIndex, u, v);
+    }
+  });
+
+  geometry.attributes.uv.needsUpdate = true;
+}
