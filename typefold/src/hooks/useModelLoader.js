@@ -8,7 +8,7 @@ const useModelLoader = (fileURL) => {
 
   useEffect(() => {
     if (!fileURL) {
-      setGltf(null); // 경로가 없으면 GLTF 초기화
+      setGltf(null); 
       return;
     }
 
@@ -16,12 +16,12 @@ const useModelLoader = (fileURL) => {
     loader.load(
       fileURL,
       (loadedGltf) => {
-        setGltf(loadedGltf); // 성공적으로 로드되었을 때만 설정
+        setGltf(loadedGltf);
       },
       undefined,
       (error) => {
         console.error("Error loading model:", error);
-        setGltf(null); // 로드 실패 시 초기화
+        setGltf(null);
       }
     );
   }, [fileURL]);

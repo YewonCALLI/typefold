@@ -18,8 +18,6 @@ import { unfoldModelWithEdges, createFaceGroups } from "../utils/geometryUtils";
 import CameraControl from "./CameraControl";
 import ControlPanel from "./ControlPanel";
 
-
-
 import "../styles/TypeFold.css";
 import { AxesHelper } from "three";
 
@@ -148,26 +146,6 @@ export default function TypeFold() {
 
   const [unfoldCount, setUnfoldCount] = useState(0); // Unfold 버튼 클릭 횟수
 
-  useEffect(() => {
-    if (gltf && unfoldedTexture) {
-      gltf.scene.traverse((child) => {
-        if (child.isMesh) {
-          const { faceGroups: groups, geometry } = createFaceGroups(child);
-          setFaceGroups(groups);
-          setGroupedGeometry(geometry);
-          
-          child.geometry = geometry;
-          child.material = new THREE.MeshBasicMaterial({
-            map: unfoldedTexture,
-            side: THREE.DoubleSide
-          });
-          
-          child.material.needsUpdate = true;
-        }
-      });
-    }
-  }, [gltf, unfoldedTexture]);
-  
   const handleUnfold = () => {
     if (unfoldCount < 1) {
       // Unfold 버튼이 처음 클릭되었을 때만 전개도 생성
@@ -217,39 +195,24 @@ export default function TypeFold() {
   }, [hoveredFace]);
 
   useEffect(() => {
-    if (selectedFace && unfoldedTexture) {
-      const { face, object } = selectedFace;
-      const geometry = object.geometry;
-
-      if (!geometry.attributes.uv) {
-        geometry.setAttribute(
-          "uv",
-          new THREE.BufferAttribute(
-            new Float32Array(geometry.attributes.position.count * 2),
-            2
-          )
-        );
-      }
-
-      const uvAttribute = geometry.attributes.uv;
-      const faceIndex = face.a !== undefined ? face.a : face.faceIndex * 3;
-      const uvArray = uvAttribute.array;
-
-      uvArray[faceIndex * 2] = 0;
-      uvArray[faceIndex * 2 + 1] = 0;
-
-      uvArray[(faceIndex + 1) * 2] = 1;
-      uvArray[(faceIndex + 1) * 2 + 1] = 0;
-
-      uvArray[(faceIndex + 2) * 2] = 1;
-      uvArray[(faceIndex + 2) * 2 + 1] = 1;
-
-      uvAttribute.needsUpdate = true;
-
-      object.material = new THREE.MeshBasicMaterial({ map: unfoldedTexture });
-      object.material.needsUpdate = true;
+    if (gltf && unfoldedTexture) {
+      gltf.scene.traverse((child) => {
+        if (child.isMesh) {
+          const { faceGroups: groups, geometry } = createFaceGroups(child);
+          setFaceGroups(groups);
+          setGroupedGeometry(geometry);
+          
+          child.geometry = geometry;
+          child.material = new THREE.MeshBasicMaterial({
+            map: unfoldedTexture,
+            side: THREE.DoubleSide
+          });
+          
+          child.material.needsUpdate = true;
+        }
+      });
     }
-  }, [selectedFace, unfoldedTexture]);
+  }, [gltf, unfoldedTexture]);
 
   //메쉬 초기화
   const resetMeshes = () => {
@@ -264,9 +227,13 @@ export default function TypeFold() {
   const handleResetToInitialState = () => {
     if (!fileURL) return;
 
-    resetMeshes();
-
-
+    // 기존 메쉬 제거
+    faceMeshesRef.current.forEach((mesh) => {
+      if (mesh.parent) {
+        mesh.parent.remove(mesh);
+      }
+    });
+    faceMeshesRef.current = [];
 
     // 상태 초기화
     setUnfoldCount(0);
