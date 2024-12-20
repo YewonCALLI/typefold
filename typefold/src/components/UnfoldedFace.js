@@ -154,6 +154,7 @@ export default function ShaderTexture({ onTextureReady }) {
       margin-bottom: 10px;
       display: flex;
       gap: 10px;
+      border: none;
     `;
 
     // Vertex Shader 에디터
@@ -168,9 +169,11 @@ export default function ShaderTexture({ onTextureReady }) {
     vertexTextarea.style.cssText = `
       width: 100%;
       height: 150px;
-      font-family: monospace;
+      font-family: 'montreal',sans-serif;
       font-size: 12px;
       resize: vertical;
+      border-radius:6px;
+      border: solid 1px #00aaff;
     `;
     vertexEditor.appendChild(vertexLabel);
     vertexEditor.appendChild(vertexTextarea);
@@ -186,9 +189,12 @@ export default function ShaderTexture({ onTextureReady }) {
     fragmentTextarea.style.cssText = `
       width: 100%;
       height: 150px;
-      font-family: monospace;
+      font-family: 'montreal',sans-serif;
       font-size: 12px;
       resize: vertical;
+      outline: none;
+      border-radius:6px;
+      border: solid 1px #00aaff;
     `;
     fragmentEditor.appendChild(fragmentLabel);
     fragmentEditor.appendChild(fragmentTextarea);
@@ -204,8 +210,9 @@ export default function ShaderTexture({ onTextureReady }) {
       margin: 10px 0;
       padding: 5px 10px;
       font-family: 'montreal', sans-serif;
-      background-color: #4CAF50;
-      color: white;
+      font-weight : 100;
+      background-color: #0CFF69;
+      color: black;
       border: none;
       border-radius: 3px;
       cursor: pointer;
@@ -221,7 +228,7 @@ export default function ShaderTexture({ onTextureReady }) {
 
     const buttonContainer = document.createElement('div');
     buttonContainer.style.marginBottom = '10px';
-    ['Hexagon', 'Checker', 'Zigzag', 'Wave'].forEach((pattern, index) => {
+    ['Type1', 'Type2', 'Type3', 'Type4'].forEach((pattern, index) => {
       const button = document.createElement('button');
       button.textContent = pattern;
       button.style.cssText = `
