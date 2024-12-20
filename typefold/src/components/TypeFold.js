@@ -355,7 +355,10 @@ export default function TypeFold() {
         </Canvas>
       </div>
       <div id="unfoldedCanvas" className="unfoldedCanvas">
-        <UnfoldedFace onTextureReady={handleTextureReady} />
+      <UnfoldedFace 
+        onTextureReady={handleTextureReady} 
+        faceSize={faceGroups ? faceGroups[0].size : null} 
+      />
       </div>
     </div>
   );
