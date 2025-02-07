@@ -8,22 +8,12 @@ export default function About() {
     <>
       <div className="aboutContainer">
         <div className="header">
-          <Link
-            className="title"
-            onClick={() => {
-              window.location.href = "/";
-            }}
-          >
-            TypoFold
-          </Link>
-          <Link
-            className="aboutButton"
-            onClick={() => {
-              window.location.href = "/";
-            }}
-          >
-            Go Back
-          </Link>
+        <Link to="/" className="title">
+          TypoFold
+        </Link>
+        <Link to="/" className="aboutButton">
+          Go Back
+        </Link>
         </div>
         <div className="row">
           {/* Vimeo 비디오 */}
