@@ -298,7 +298,7 @@ export default function ShaderTexture({ onTextureReady }) {
     if (p5Ref.current) {
       recompileShader(p5Ref.current);
     }
-  }, [vertexShaderCode, fragmentShaderCode]);
+  }, [vertexShaderCode, fragmentShaderCode, recompileShader]);
 
   const draw = (p5) => {
     if (!shaderRef.current) return;
