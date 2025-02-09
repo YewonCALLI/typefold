@@ -20,7 +20,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Text",
+            "name" : "Text.001",
             "primitives" : [
                 {
                     "attributes" : {
@@ -37,68 +37,68 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 54,
+            "count" : 22,
             "max" : [
-                0.22740715742111206,
-                0.09999998658895493,
-                0.2504139840602875
+                0.20567378401756287,
+                0.15000000596046448,
+                0.3822188079357147
             ],
             "min" : [
-                -0.22752541303634644,
-                -0.09999998658895493,
-                -0.2499409019947052
+                -0.1428571343421936,
+                -0.15000000596046448,
+                -0.3705674409866333
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 54,
+            "count" : 22,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 54,
+            "count" : 22,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 132,
+            "count" : 36,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 648,
+            "byteLength" : 264,
             "byteOffset" : 0,
             "target" : 34962
         },
         {
             "buffer" : 0,
-            "byteLength" : 648,
-            "byteOffset" : 648,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 432,
-            "byteOffset" : 1296,
-            "target" : 34962
-        },
-        {
-            "buffer" : 0,
             "byteLength" : 264,
-            "byteOffset" : 1728,
+            "byteOffset" : 264,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 176,
+            "byteOffset" : 528,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 72,
+            "byteOffset" : 704,
             "target" : 34963
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 1992,
-            "uri" : "data:application/octet-stream;base64,1ptRPsvMzD2aYgy+xKe6PcvMzD2aYgy+cGAYPcvMzD2TJAw+KNQbPsvMzD2TJAw+kpIEPsvMzD1DNoA+bPxovsvMzD1DNoA+1bpRvsvMzD2TJAw+xOW6vcvMzD2TJAw+cNwYvcvMzD2aYgy+HDkbvsvMzD2aYgy+kbEEvsvMzD2C8H++bN1oPsvMzD2C8H++1ptRPsvMzL2aYgy+1ptRPsvMzL2aYgy+xKe6PcvMzL2aYgy+xKe6PcvMzL2aYgy+cGAYPcvMzL2TJAw+KNQbPsvMzL2TJAw+kpIEPsvMzL1DNoA+bPxovsvMzL1DNoA+1bpRvsvMzL2TJAw+xOW6vcvMzL2TJAw+cNwYvcvMzL2aYgy+cNwYvcvMzL2aYgy+HDkbvsvMzL2aYgy+HDkbvsvMzL2aYgy+kbEEvsvMzL2C8H++bN1oPsvMzL2C8H++1ptRPsvMzL2aYgy+1ptRPsvMzL2aYgy+1ptRPsvMzD2aYgy+1ptRPsvMzD2aYgy+xKe6PcvMzL2aYgy+xKe6PcvMzD2aYgy+cGAYPcvMzL2TJAw+cGAYPcvMzD2TJAw+KNQbPsvMzL2TJAw+KNQbPsvMzD2TJAw+kpIEPsvMzL1DNoA+kpIEPsvMzD1DNoA+bPxovsvMzL1DNoA+bPxovsvMzD1DNoA+1bpRvsvMzL2TJAw+1bpRvsvMzD2TJAw+xOW6vcvMzL2TJAw+xOW6vcvMzD2TJAw+cNwYvcvMzL2aYgy+cNwYvcvMzD2aYgy+HDkbvsvMzL2aYgy+HDkbvsvMzD2aYgy+kbEEvsvMzL2C8H++kbEEvsvMzD2C8H++bN1oPsvMzL2C8H++bN1oPsvMzD2C8H++AAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgL8AAACAAAAAAAAAgD8AAACAAAAAAAAAgL8AAACAAAAAAAAAgD8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAAAAAAAAAgD8AAACAAAAAAAAAgL8AAACAAAAAAAAAgD8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAcy4iPwAAAADbEkY/cy4iPwAAAADbEkY/cy4iPwAAAADbEkY/cy4iPwAAAADbEkY/2JgiPwAAAACPu0U/2JgiPwAAAACPu0U/jrtFPwAAAADYmCK/jrtFPwAAAADYmCK/v/lFPwAAAAAaTSK/v/lFPwAAAAAaTSK/Gk0iPwAAAAC/+UU/Gk0iPwAAAAC/+UU/wflFvwAAAAAZTSI/wflFvwAAAAAZTSI/GU0ivwAAAADA+UW/GU0ivwAAAADA+UW/2JgivwAAAACOu0W/2JgivwAAAACOu0W/jrtFvwAAAADZmCI/jrtFvwAAAADZmCI//5RFvwAAAACwxyI//5RFvwAAAACwxyI/sMcivwAAAAAAlUW/sMcivwAAAAAAlUW/3BJGPwAAAAB1LiK/3BJGPwAAAAB1LiK/AAAAAAAAgD+MLro9AACAP4wuOj4AAIA/6aKLPgAAgD+MLro+AACAPy+66D4AAIA/6aILPwAAgD+66CI/AACAP4wuOj8AAIA/XXRRPwAAgD8vumg/AACAPwAAgD8AAIA/AAAAAAAAgD8AAAAAAACAP4wuuj0AAIA/jC66PQAAgD+MLjo+AACAP+miiz4AAIA/jC66PgAAgD8vuug+AACAP+miCz8AAIA/uugiPwAAgD+MLjo/AACAP4wuOj8AAIA/XXRRPwAAgD9ddFE/AACAPy+6aD8AAIA/AACAPwAAgD8AAAAAAACAPwAAgD8AAIA/AAAAAAAAAAAAAIA/AAAAAKuqqj0AAIA/q6qqPQAAAACrqio+AACAP6uqKj4AAAAAAACAPgAAgD8AAIA+AAAAAKuqqj4AAIA/q6qqPgAAAABVVdU+AACAP1VV1T4AAAAAAAAAPwAAgD8AAAA/AAAAAFVVFT8AAIA/VVUVPwAAAACrqio/AACAP6uqKj8AAAAAAABAPwAAgD8AAEA/AAAAAFVVVT8AAIA/VVVVPwAAAACrqmo/AACAP6uqaj8AAAAACQALAAoACQAAAAsACAAAAAkABwABAAgAAQAAAAgABwACAAEABQAHAAYABQACAAcABQADAAIABQAEAAMAGAAaABsAGAAbAAwAFwAZAA0AFQAWAA4ADwAXAA0AFQAOABAAEwAUABUAEwAVABAAEwAQABEAEwARABIAHgAhACAAHgAgABwAIQAjACIAIQAiACAAIwAlACQAIwAkACIAJQAnACYAJQAmACQAJwApACgAJwAoACYAKQArACoAKQAqACgAKwAtACwAKwAsACoALQAvAC4ALQAuACwALwAxADAALwAwAC4AMQAzADIAMQAyADAAMwA1ADQAMwA0ADIANQAfAB0ANQAdADQA"
+            "byteLength" : 776,
+            "uri" : "data:application/octet-stream;base64,JEkSvpqZGT5wgbe+JEkSvpqZGT5wgbe+iPJbPZqZGT4Eu72+JpxSPpqZGT49irE+JpxSPpqZGT49irE+QJ/uvZqZGT4vssM+JEkSvpqZGb5wgbe+JEkSvpqZGb5wgbe+iPJbPZqZGb4Eu72+JpxSPpqZGb49irE+JpxSPpqZGb49irE+QJ/uvZqZGb4vssM+JEkSvpqZGb5wgbe+JEkSvpqZGb5wgbe+JEkSvpqZGT5wgbe+JEkSvpqZGT5wgbe+iPJbPZqZGb4Eu72+iPJbPZqZGT4Eu72+JpxSPpqZGb49irE+JpxSPpqZGT49irE+QJ/uvZqZGb4vssM+QJ/uvZqZGT4vssM+AAAAAAAAgD8AAACAmZQFNAAAgD8AAACAAAAAAAAAgD8AAACAAAAAAAAAgD8AAACAmZQFNAAAgD8AAACAmZQFNAAAgD8AAACAAAAAAAAAgL8AAACAmZQFNAAAgL8AAACAAAAAAAAAgL8AAACAAAAAAAAAgL8AAACAmZQFNAAAgL8AAACAmZQFNAAAgL8AAACAXpw9vwAAAADP/yu/Xpw9vwAAAADP/yu/Xpw9vwAAAADP/yu/Xpw9vwAAAADP/yu/0vMaPwAAAABYx0u/0vMaPwAAAABYx0u/R21PPwAAAACcCBY/R21PPwAAAACcCBY/HWonvwAAAAC6q0E/HWonvwAAAAC6q0E/AAAAAAAAgD8AAAAAAACAP6uqqj4AAIA/q6oqPwAAgD+rqio/AACAPwAAgD8AAIA/AAAAAAAAgD8AAAAAAACAP6uqqj4AAIA/q6oqPwAAgD+rqio/AACAPwAAgD8AAIA/AAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAIA+AACAPwAAgD4AAAAAAAAAPwAAgD8AAAA/AAAAAAAAQD8AAIA/AABAPwAAAAAAAAMAAgAFAAQAAQAGAAgACQALAAcACgAOABEAEAAOABAADAARABMAEgARABIAEAATABUAFAATABQAEgAVAA8ADQAVAA0AFAA="
         }
     ]
 }

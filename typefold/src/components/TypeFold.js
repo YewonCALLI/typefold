@@ -105,7 +105,7 @@ export default function TypeFold() {
       },
       {
         "type": "T",
-        "path": "./models/t(1).gltf"
+        "path": "./models/t.gltf"
       },
       {
         "type": "U",
