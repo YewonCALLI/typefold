@@ -134,8 +134,6 @@ export default function TypeFold() {
   
   ];
 
-  const [selectedFace, setSelectedFace] = useState(null);
-  const [hoveredFace, setHoveredFace] = useState(null); // 호버 상태 관리
   const [unfoldedTexture, setUnfoldedTexture] = useState(null);
   const [fileURL, setFileURL] = useState(null);
 
@@ -175,24 +173,6 @@ export default function TypeFold() {
     texture.needsUpdate = true;
     setUnfoldedTexture(texture);
   };
-
-  useEffect(() => {
-    if (hoveredFace) {
-      // 호버된 면을 빨간색으로 표시
-      const { object } = hoveredFace;
-      object.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      object.material.needsUpdate = true;
-    }
-
-    return () => {
-      if (hoveredFace) {
-        // 호버 상태 해제 시 원래 재질로 복구
-        const { object } = hoveredFace;
-        object.material = new THREE.MeshStandardMaterial(); // 원래 재질 (필요 시 수정)
-        object.material.needsUpdate = true;
-      }
-    };
-  }, [hoveredFace]);
 
   useEffect(() => {
     if (gltf && unfoldedTexture) {
@@ -237,8 +217,6 @@ export default function TypeFold() {
 
     // 상태 초기화
     setUnfoldCount(0);
-    setSelectedFace(null);
-    setHoveredFace(null);
     setUnfoldedTexture(null);
     setCameraDirection("perspective");
 
@@ -344,13 +322,12 @@ export default function TypeFold() {
           <pointLight position={[-10, -10, -10]} />
           <Scene
             gltf={gltf}
-            setSelectedFace={setSelectedFace}
-            setHoveredFace={setHoveredFace}
           />
           {cameraDirection === "perspective" ? (
             <OrbitControls />
           ) : (
-            <MapControls enableDamping={false} enableRotate={false} />
+            // <MapControls enableDamping={false} enableRotate={false} />
+            <OrbitControls />
           )}
         </Canvas>
       </div>
@@ -365,7 +342,7 @@ export default function TypeFold() {
 }
 
 const Scene = (
-  { gltf, setSelectedFace, setHoveredFace } // 3D 씬
+  { gltf} // 3D 씬
 ) => {
   const gl = useThree((state) => state.gl);
   useEffect(() => {
@@ -386,10 +363,6 @@ const Scene = (
   return (
     <>
       {gltf && <Model gltf={gltf} />} {/* 3D Model */}
-      <InteractionHandler
-        setSelectedFace={setSelectedFace}
-        setHoveredFace={setHoveredFace} // 호버 상태 업데이트
-      />
     </>
   );
 };

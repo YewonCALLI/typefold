@@ -103,7 +103,6 @@ export default function ShaderTexture({ onTextureReady }) {
       shaderRef.current = newShader;
       p5.shader(newShader);
       
-      console.log('Shader compiled successfully');
     } catch (error) {
       console.error("Shader compilation failed:", error);
       alert(`Shader compilation error: ${error.message}`);
