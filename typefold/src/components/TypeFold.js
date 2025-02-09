@@ -326,8 +326,8 @@ export default function TypeFold() {
           {cameraDirection === "perspective" ? (
             <OrbitControls />
           ) : (
-            // <MapControls enableDamping={false} enableRotate={false} />
-            <OrbitControls />
+            <MapControls enableDamping={false} enableRotate={false} />
+            // <OrbitControls />
           )}
         </Canvas>
       </div>
