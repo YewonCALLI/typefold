@@ -192,19 +192,41 @@ function createSideFaceMesh(sideGroups, position) {
     vertexColors: true
   });
 
-  const guideMaterial = new THREE.MeshBasicMaterial({ // MeshBasicMaterial 사용
+  const guideMaterial = new THREE.MeshBasicMaterial({
     color: 0xffffff,
-    side: THREE.DoubleSide
+    side: THREE.DoubleSide,
+    vertexColors: false,  // vertexColors를 false로 설정
+    map: null  // texture map을 null로 설정
   });
 
   // Create meshes
   const mainMesh = new THREE.Mesh(mainGeometry, mainMaterial);
   const guideMesh = new THREE.Mesh(guideGeometry, guideMaterial);
+
   
   // 경계선 추가
   const edgesGroup = new THREE.Group();
   
-  // 모든 면의 외곽선과 구분선
+  // LineBasicMaterial 옵션 정의
+  const mainLineOptions = {
+    color: 0x000000,        // 색상
+    linewidth: 1,           // 선 굵기 (대부분의 GPU에서 1로 제한됨)
+    linecap: 'round',       // 선 끝 스타일 ('butt', 'round', 'square')
+    linejoin: 'round',      // 선 연결부 스타일 ('round', 'bevel', 'miter')
+    opacity: 0.5,           // 투명도 (0.0 - 1.0)
+    transparent: false,     // 투명도 사용 여부
+    depthTest: true,       // depth testing 사용 여부
+    depthWrite: true,      // depth buffer에 쓰기 여부
+    blending: THREE.NormalBlending  // 블렌딩 모드
+  };
+
+  const guideLineOptions = {
+    ...mainLineOptions,
+    color: 0xFF0000,        // 빨간색
+    linewidth: 1,           // 더 얇은 선 굵기
+    opacity: 0.8            // 약간 투명하게
+  };
+
   groupInfos.forEach((info, index) => {
     const startX = -totalWidth/2 + info.startX;
     const points = [
@@ -236,13 +258,14 @@ function createSideFaceMesh(sideGroups, position) {
       );
     }
 
-    // 선 생성
+    // 가로선 생성
     points.forEach((point, i) => {
       if (i % 2 === 0) {
         const lineGeometry = new THREE.BufferGeometry().setFromPoints([point, points[i + 1]]);
+        const isGuideArea = (i < 2) || (i >= 6); // 위아래 가이드 영역의 선
         const line = new THREE.Line(
           lineGeometry,
-          new THREE.LineBasicMaterial({ color: 0x000000 })
+          new THREE.LineBasicMaterial(isGuideArea ? guideLineOptions : mainLineOptions)
         );
         edgesGroup.add(line);
       }
@@ -250,15 +273,38 @@ function createSideFaceMesh(sideGroups, position) {
 
     // 세로선 추가
     for (let i = 0; i < verticalPoints.length; i += 2) {
-      const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+      // 위쪽 가이드 영역
+      const topGuideGeometry = new THREE.BufferGeometry().setFromPoints([
         verticalPoints[i],
+        new THREE.Vector3(verticalPoints[i].x, info.height/2, 0.001)
+      ]);
+      const topGuideLine = new THREE.Line(
+        topGuideGeometry,
+        new THREE.LineBasicMaterial(guideLineOptions)
+      );
+      edgesGroup.add(topGuideLine);
+
+      // 중간 메인 영역
+      const mainGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(verticalPoints[i].x, info.height/2, 0.001),
+        new THREE.Vector3(verticalPoints[i].x, -info.height/2, 0.001)
+      ]);
+      const mainLine = new THREE.Line(
+        mainGeometry,
+        new THREE.LineBasicMaterial(mainLineOptions)
+      );
+      edgesGroup.add(mainLine);
+
+      // 아래쪽 가이드 영역
+      const bottomGuideGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(verticalPoints[i].x, -info.height/2, 0.001),
         verticalPoints[i + 1]
       ]);
-      const line = new THREE.Line(
-        lineGeometry,
-        new THREE.LineBasicMaterial({ color: 0x000000 })
+      const bottomGuideLine = new THREE.Line(
+        bottomGuideGeometry,
+        new THREE.LineBasicMaterial(guideLineOptions)
       );
-      edgesGroup.add(line);
+      edgesGroup.add(bottomGuideLine);
     }
   });
 
@@ -269,6 +315,7 @@ function createSideFaceMesh(sideGroups, position) {
 
   return group;
 }
+
 
 function createSingleMesh(group, position, color) {
   const geometry = new THREE.BufferGeometry();
