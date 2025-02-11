@@ -5,11 +5,13 @@ export default function ShaderTexture({ onTextureReady }) {
   const shaderRef = useRef(null);
   const p5Ref = useRef(null);
   const [patternType, setPatternType] = useState(1);
-  const [patternScale, setPatternScale] = useState(3.0);
+  const [patternScale, setPatternScale] = useState(8.0);
   const [vertexShaderCode, setVertexShaderCode] = useState(`
+    precision mediump float;
     attribute vec3 aPosition;
     attribute vec2 aTexCoord;
     varying vec2 vTexCoord;
+    
     void main() {
       vTexCoord = aTexCoord;
       vec4 positionVec4 = vec4(aPosition, 1.0);
@@ -20,10 +22,27 @@ export default function ShaderTexture({ onTextureReady }) {
 
   const [fragmentShaderCode, setFragmentShaderCode] = useState(`
     precision mediump float;
+    
     varying vec2 vTexCoord;
     uniform float uTime;
     uniform int uPattern;
     uniform float uPatternScale;
+
+    mat2 rotate2d(float angle) {
+      return mat2(cos(angle), -sin(angle),
+                 sin(angle), cos(angle));
+    }
+
+    float starburstPattern(vec2 p) {
+      vec2 center = vec2(0.5);
+      vec2 pos = p - center;
+      pos = rotate2d(uTime * 0.5) * pos;
+      float a = atan(pos.y, pos.x);
+      float r = length(pos);
+      float rays = sin(a * 12.0) * 0.5 + 0.5;
+      float circles = sin(r * uPatternScale * 5.0 - uTime * 2.0);
+      return mix(rays, circles, 0.5 + sin(uTime) * 0.5);
+    }
 
     float hexagonPattern(vec2 p) {
       vec2 hexCoord = p * uPatternScale;
@@ -33,6 +52,19 @@ export default function ShaderTexture({ onTextureReady }) {
       
       float hex = length(gridPos) * 2.0;
       return hex;
+    }
+
+    float tilePattern(vec2 p) {
+      vec2 grid = fract(p * uPatternScale);
+      vec2 gridId = floor(p * uPatternScale);
+      
+      vec2 cellCenter = vec2(0.5);
+      float dist = length(grid - cellCenter);
+      
+      float randomOffset = sin(gridId.x * 13.37 + gridId.y * 17.89);
+      float pattern = sin(dist * 8.0 + uTime + randomOffset);
+      
+      return pattern;
     }
 
     float checkerPattern(vec2 p) {
@@ -53,11 +85,11 @@ export default function ShaderTexture({ onTextureReady }) {
       vec3 color;
       
       if (uPattern == 1) {
-        float hex = hexagonPattern(uv + vec2(sin(uTime * 0.2), cos(uTime * 0.2)) * 0.1);
+        float tile = tilePattern(uv);
         color = vec3(
-          sin(hex * 4.0 + uTime) * 0.5 + 0.5,
-          cos(hex * 5.0 - uTime) * 0.5 + 0.5,
-          sin(hex * 6.0 + uTime * 0.7) * 0.5 + 0.5
+          sin(tile * 2.0 + uTime) * 0.5 + 0.5,
+          sin(tile * 3.0 + uTime * 1.2) * 0.5 + 0.5,
+          sin(tile * 4.0 + uTime * 0.8) * 0.5 + 0.5
         );
       }
       else if (uPattern == 2) {
@@ -76,15 +108,23 @@ export default function ShaderTexture({ onTextureReady }) {
           sin(zig * 3.0 - uTime * 0.5) * 0.5 + 0.5
         );
       }
-      else {
-        float waves = sin(uv.x * uPatternScale * 2.0 + uTime) * 0.5 + 
-                     sin(uv.y * (uPatternScale * 1.5) - uTime * 0.7) * 0.5;
+      else if (uPattern == 4) {
+      float hex = hexagonPattern(uv + vec2(sin(uTime * 0.2), cos(uTime * 0.2)) * 0.1);
         color = vec3(
-          sin(waves * 3.0 + uTime) * 0.5 + 0.5,
-          cos(waves * 4.0 - uTime * 0.5) * 0.5 + 0.5,
-          sin(waves * 5.0 + uTime * 0.3) * 0.5 + 0.5
+          sin(hex * 4.0 + uTime) * 0.5 + 0.5,
+          cos(hex * 5.0 - uTime) * 0.5 + 0.5,
+          sin(hex * 6.0 + uTime * 0.7) * 0.5 + 0.5
         );
       }
+      else {
+        float star = starburstPattern(uv);
+        color = vec3(
+          sin(star * 3.0 + uTime) * 0.5 + 0.5,
+          cos(star * 4.0 - uTime * 1.5) * 0.5 + 0.5,
+          sin(star * 5.0 + uTime) * 0.5 + 0.5
+        );
+      }
+      
       gl_FragColor = vec4(color, 1.0);
     }
   `);
@@ -227,7 +267,7 @@ export default function ShaderTexture({ onTextureReady }) {
 
     const buttonContainer = document.createElement('div');
     buttonContainer.style.marginBottom = '10px';
-    ['Type1', 'Type2', 'Type3', 'Type4'].forEach((pattern, index) => {
+    ['Type1', 'Type2', 'Type3', 'Type4', 'Type5'].forEach((pattern, index) => {
       const button = document.createElement('button');
       button.textContent = pattern;
       button.style.cssText = `
