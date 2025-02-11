@@ -117,7 +117,7 @@ function createSideFaceMesh(sideGroups, position) {
   });
 
   const maxHeight = Math.max(...groupInfos.map(info => info.height));
-  const guideHeight = maxHeight * 0.2;
+  const guideHeight = maxHeight * 0.4;
 
   // Separate geometries for guide areas and main faces
   const mainGeometry = new THREE.BufferGeometry();
@@ -486,7 +486,7 @@ function createGroupMeshes(groups, unfoldOrder, position, originalMesh) {
     // 수동 조정 코드
     mesh.position.z = -0.1;
 
-    const spacing = 0.6;
+    const spacing = 0.7;
     if (group.type === 'top') {
       mesh.position.y = spacing;
       mesh.position.x = -spacing;
