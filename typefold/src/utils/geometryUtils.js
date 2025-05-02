@@ -1,3 +1,5 @@
+//geometryUtils.js (전개도 처리)
+
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { gsap } from "gsap";
@@ -406,6 +408,11 @@ function createGroupMeshes(groups, unfoldOrder, position, originalMesh) {
     const pivot = new THREE.Object3D();
     pivot.add(sideMesh);
     originalMesh.parent.add(pivot);
+    
+    // 접기 애니메이션을 위한 메타데이터 추가
+    sideMesh.userData.isBaseMesh = true;
+    sideMesh.userData.connections = [];
+    
     meshes.set('side', pivot);
   }
 
@@ -496,13 +503,81 @@ function createGroupMeshes(groups, unfoldOrder, position, originalMesh) {
     } else if (group.type ==='side'){
     }
 
+    // 접기 애니메이션을 위한 초기 상태 저장
+    mesh.userData.originalPosition = {
+      x: mesh.position.x,
+      y: mesh.position.y,
+      z: mesh.position.z
+    };
+    mesh.userData.originalRotation = {
+      x: mesh.rotation.x,
+      y: mesh.rotation.y,
+      z: mesh.rotation.z
+    };
+    mesh.userData.originalQuaternion = mesh.quaternion.clone();
+    mesh.userData.groupType = group.type;
+
     const pivot = new THREE.Object3D();
     pivot.add(mesh);
     originalMesh.parent.add(pivot);
     meshes.set(group, pivot);
   });
 
-  return Array.from(meshes.values()).map((pivot) => pivot.children[0]);
+  // 메시들 간의 접기 관계 설정
+  const resultMeshes = Array.from(meshes.values()).map(pivot => pivot.children[0]);
+  
+  if (sideMesh) {
+    resultMeshes.forEach(mesh => {
+      if (mesh !== sideMesh) {
+        // 접는 축과 각도 계산
+        const foldAxis = calculateFoldAxis(mesh, sideMesh, mesh.userData.groupType);
+        const foldAngle = calculateFoldAngle(mesh, sideMesh, mesh.userData.groupType);
+        
+        // 메시에 접기 정보 저장
+        mesh.userData.foldAxis = foldAxis;
+        mesh.userData.foldAngle = foldAngle;
+        mesh.userData.parentMesh = sideMesh;
+        
+        // side 메시에도 연결 정보 저장
+        sideMesh.userData.connections.push({
+          childMesh: mesh,
+          foldAxis: foldAxis,
+          foldAngle: foldAngle
+        });
+      }
+    });
+  }
+
+  return resultMeshes;
+}
+
+// 접는 축 계산 함수
+function calculateFoldAxis(mesh, parentMesh, groupType) {
+  // 그룹 타입에 따라 접는 축 결정
+  if (groupType === 'top') {
+    // 상단 면은 x축 기준으로 접힘
+    return new THREE.Vector3(1, 0, 0);
+  } else if (groupType === 'bottom') {
+    // 하단 면도 x축 기준으로 접힘
+    return new THREE.Vector3(1, 0, 0);
+  } else {
+    // 기본 접는 축 (y축)
+    return new THREE.Vector3(0, 1, 0);
+  }
+}
+
+// 접는 각도 계산 함수
+function calculateFoldAngle(mesh, parentMesh, groupType) {
+  if (groupType === 'top') {
+    // 상단 면은 -90도 접힘 (위로)
+    return -Math.PI / 2;
+  } else if (groupType === 'bottom') {
+    // 하단 면은 90도 접힘 (아래로)
+    return Math.PI / 2;
+  } else {
+    // 기본 각도
+    return 0;
+  }
 }
 
 
@@ -526,6 +601,7 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
   const faceGroups = [];
   const visitedFaces = new Set();
   const thresholdAngle = THREE.MathUtils.degToRad(0.5);
+
 
   for (let i = 0; i < faceCount; i++) {
     if (visitedFaces.has(i)) continue;
@@ -611,22 +687,63 @@ export function unfoldModelWithEdges(mesh, faceMeshesRef, unfoldedTexture) {
   // 그룹 간의 연결 관계 찾기
   findGroupConnections(faceGroups, position);
 
-  // 그룹별 메시 생성 및 펼치기
   const meshes = createGroupMeshes(faceGroups, [], position, mesh);
-  faceMeshesRef.current = meshes;
-
-  // 텍스처 적용
-  if (unfoldedTexture) {
-    meshes.forEach((meshOrGroup) => {
-      // Group인 경우 첫 번째 자식(메인 메시)에 텍스처 적용
-      const targetMesh = meshOrGroup instanceof THREE.Group ? meshOrGroup.children[0] : meshOrGroup;
-      if (targetMesh && targetMesh.material) {
-        targetMesh.material.map = unfoldedTexture;
-        targetMesh.material.needsUpdate = true;
+  
+  // 애니메이션을 위한 초기화
+  meshes.forEach(meshObj => {
+    // Group인지 개별 메시인지 확인
+    const isGroup = meshObj instanceof THREE.Group;
+    
+    if (isGroup) {
+      // 그룹의 경우 모든 자식 메시의 재질 설정
+      meshObj.children.forEach(child => {
+        if (child.isMesh && child.material) {
+          // 애니메이션을 위한 투명도 설정
+          child.material.transparent = true;
+          
+          // 텍스처 적용
+          if (unfoldedTexture) {
+            child.material.map = unfoldedTexture;
+            child.material.needsUpdate = true;
+          }
+        }
+      });
+      
+      // 그룹의 원래 위치/회전 저장
+      meshObj.userData.originalPosition = meshObj.position.clone();
+      meshObj.userData.originalRotation = new THREE.Euler(
+        meshObj.rotation.x,
+        meshObj.rotation.y,
+        meshObj.rotation.z
+      );
+      meshObj.userData.objectType = 'group';
+    } else if (meshObj.isMesh) {
+      // 개별 메시의 경우
+      if (meshObj.material) {
+        // 애니메이션을 위한 투명도 설정
+        meshObj.material.transparent = true;
+        
+        // 텍스처 적용
+        if (unfoldedTexture) {
+          meshObj.material.map = unfoldedTexture;
+          meshObj.material.needsUpdate = true;
+        }
       }
-    });
-  }
+      
+      // 메시의 원래 위치/회전 저장
+      meshObj.userData.originalPosition = meshObj.position.clone();
+      meshObj.userData.originalRotation = new THREE.Euler(
+        meshObj.rotation.x,
+        meshObj.rotation.y,
+        meshObj.rotation.z
+      );
+      meshObj.userData.objectType = 'mesh';
+    }
+  });
+  
+  faceMeshesRef.current = meshes;
 }
+
 
 export function createFaceGroups(mesh) {
   let geometry = mesh.geometry.clone();

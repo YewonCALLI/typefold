@@ -308,18 +308,27 @@ export default function TypeFold() {
         </ControlPanel>
         <Canvas
           style={{ width: "100%", height: "100%" }}
-          gl={{ preserveDrawingBuffer: true }} // 캡쳐 기능을 위한 설정
+          gl={{ 
+            preserveDrawingBuffer: true,
+            antialias: true,
+            alpha: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 0.8 // 노출 감소
+           }} // 캡쳐 기능을 위한 설정
         >
           <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={10} />
           <CameraControl cameraDirection={cameraDirection} />
-          <ambientLight intensity={2} />
+          <ambientLight intensity={0.7} color="#e0e0ff" />
           <spotLight
             position={[10, 10, 10]}
             angle={0.15}
             penumbra={1}
-            intensity={1}
+            intensity={7.6} 
+            color="#fff9f0" 
           />
-          <pointLight position={[-10, -10, -10]} />
+          <pointLight position={[0, 0, 0]} intensity={0.4} color="#e0f0ff" />
+        
+        
           <Scene
             gltf={gltf}
           />
